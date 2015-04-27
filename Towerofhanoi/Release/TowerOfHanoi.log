@@ -1,0 +1,36 @@
+﻿Сборка начата 19.04.2015 20:02:07.
+     1>Проект "C:\Users\ich\Documents\Visual Studio 2013\Projects\TowerOfHanoi\TowerOfHanoi\TowerOfHanoi.vcxproj" в узле 2 (целевые объекты Build).
+     1>ClCompile:
+         E:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /sdl /O2 /Oi /Oy- /GL /D _MBCS /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt hanoi.cpp
+         hanoi.cpp
+     1>hanoi.cpp(30): warning C4305: аргумент: усечение из "double" к "GLclampf"
+     1>hanoi.cpp(54): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>hanoi.cpp(62): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>hanoi.cpp(64): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>hanoi.cpp(67): warning C4305: аргумент: усечение из "double" к "GLfloat"
+       Link:
+         E:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\ich\Documents\Visual Studio 2013\Projects\TowerOfHanoi\Release\TowerOfHanoi.exe" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\ich\Documents\Visual Studio 2013\Projects\TowerOfHanoi\Release\TowerOfHanoi.pdb" /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\ich\Documents\Visual Studio 2013\Projects\TowerOfHanoi\Release\TowerOfHanoi.lib" /MACHINE:X86 /SAFESEH Release\hanoi.obj
+     1>hanoi.obj : error LNK2001: неразрешенный внешний символ "__imp__glVertex2f@8"
+     1>hanoi.obj : error LNK2001: неразрешенный внешний символ "__imp__glClear@4"
+     1>hanoi.obj : error LNK2001: неразрешенный внешний символ "__imp__glClearColor@16"
+     1>hanoi.obj : error LNK2001: неразрешенный внешний символ "_glutInitWindowPosition@8"
+     1>hanoi.obj : error LNK2001: неразрешенный внешний символ "__imp__glOrtho@48"
+     1>hanoi.obj : error LNK2001: неразрешенный внешний символ "_glutCreateWindow@4"
+     1>hanoi.obj : error LNK2001: неразрешенный внешний символ "__imp__glEnd@0"
+     1>hanoi.obj : error LNK2001: неразрешенный внешний символ "__imp__glRasterPos2f@8"
+     1>hanoi.obj : error LNK2001: неразрешенный внешний символ "__imp__glBegin@4"
+     1>hanoi.obj : error LNK2001: неразрешенный внешний символ "_glutInitDisplayMode@4"
+     1>hanoi.obj : error LNK2001: неразрешенный внешний символ "__imp__glMatrixMode@4"
+     1>hanoi.obj : error LNK2001: неразрешенный внешний символ "__imp__glFlush@0"
+     1>hanoi.obj : error LNK2001: неразрешенный внешний символ "_glutMainLoop@0"
+     1>hanoi.obj : error LNK2001: неразрешенный внешний символ "_glutInitWindowSize@8"
+     1>hanoi.obj : error LNK2001: неразрешенный внешний символ "__imp__glColor3f@12"
+     1>hanoi.obj : error LNK2001: неразрешенный внешний символ "_glutBitmapCharacter@8"
+     1>hanoi.obj : error LNK2001: неразрешенный внешний символ "_glutDisplayFunc@4"
+     1>hanoi.obj : error LNK2001: неразрешенный внешний символ "__imp__glLoadIdentity@0"
+     1>C:\Users\ich\Documents\Visual Studio 2013\Projects\TowerOfHanoi\Release\TowerOfHanoi.exe : fatal error LNK1120: неразрешенных внешних элементов: 18
+     1>Сборка проекта "C:\Users\ich\Documents\Visual Studio 2013\Projects\TowerOfHanoi\TowerOfHanoi\TowerOfHanoi.vcxproj" завершена (целевые объекты Build) с ошибкой.
+
+Ошибка сборки.
+
+Затраченное время: 00:00:00.50
