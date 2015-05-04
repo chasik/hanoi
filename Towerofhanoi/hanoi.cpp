@@ -6,7 +6,7 @@
 
 // мои заголовочные файлы
 
-
+HDC wgldc;
 int **Rods;
 int RingsCount = 0;
 float animateRingToYY = 0, animateRingToXX = 0, topRod = 13;
@@ -36,12 +36,14 @@ int GetCountRingAtRod(int _rodnum);
 int GetValAnimatedRing(int _rodnum);
 int GetIdAnimatedRing(int _rodnum);
 void SwapRingsAtRods(int _rodstart, int _rodfinish);
+bool MoveEnabled(int _rodnum);
+char WideCharToChar(const wchar_t Value);
 
 int** InitData(int _countdisk);
 
 void main(){
 	Rods = InitData(RingsCount = 7);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+	glutInitDisplayMode(GLUT_SINGLE/*GLUT_DOUBLE*/ | GLUT_RGB);
 	glutInitWindowSize(WinWidth, WinHeight);
 	glutInitWindowPosition(100, 200);
 	glutCreateWindow("HaNoI");
@@ -53,6 +55,7 @@ void main(){
 	glLoadIdentity();
 	glOrtho(0.0, WinWidth, WinHeight, 0.0, -1.0, 1.0);
 	char fileopt[] = "options.ini";
+	wgldc = wglGetCurrentDC();
 	glutMainLoop();
 	return;
 }
@@ -90,6 +93,8 @@ void RenderScene()
 	}
 	for (int rodNumber = 0; rodNumber < 3; rodNumber++)
 	{
+		bool rodMoveEnabled = MoveEnabled(rodNumber);
+			
 		int countringatrod = GetCountRingAtRod(rodNumber);
 		for (int ringNumber = 0; ringNumber < countringatrod; ringNumber++)
 		{
@@ -113,10 +118,12 @@ void RenderScene()
 					glVertex2f(centerRod + widthRing / 2 - stepw + animateXX, 451 - (ringNumber + 1) * heightRing - animateYY);
 					glVertex2f(centerRod + widthRing / 2 - stepw + animateXX, 451 - (ringNumber)* heightRing - animateYY);
 
-					glColor3f(0.04 * (RingsCount * ringNum) + 0.1, 0.03 * (RingsCount - ringNum) + 0.1, 0.02 * (RingsCount - ringNum) + 0.1);
+					rodMoveEnabled ? glColor3f(0.04 * (RingsCount * ringNum) + 0.1, 0.03 * (RingsCount - ringNum) + 0.1, 0.02 * (RingsCount - ringNum) + 0.1) 
+									 : glColor3f(0.5, 0.5, 0.5);
 					glVertex2f(centerRod - widthRing / 2 + stepw + 1 + animateXX, 451 - (ringNumber)* heightRing - 1 - animateYY);
 					glVertex2f(centerRod - widthRing / 2 + stepw + 1 + animateXX, 451 - (ringNumber + 1) * heightRing + 1 - animateYY);
-					glColor3f(0.04 * (RingsCount - ringNum) + 0.01, 0.03 * (RingsCount - ringNum ) + 0.01, 0.02 * (RingsCount - ringNum ) + 0.01);
+					rodMoveEnabled ? glColor3f(0.04 * (RingsCount - ringNum) + 0.01, 0.03 * (RingsCount - ringNum ) + 0.01, 0.02 * (RingsCount - ringNum ) + 0.01)
+									 : glColor3f(0.2, 0.2, 0.2);
 					glVertex2f(centerRod + widthRing / 2 - stepw - 1 + animateXX, 451 - (ringNumber + 1) * heightRing + 1 - animateYY);
 					glVertex2f(centerRod + widthRing / 2 - stepw - 1 + animateXX, 451 - (ringNumber)* heightRing - 1 - animateYY);
 				glEnd();
@@ -134,29 +141,31 @@ void RenderScene()
 			glVertex2f(WinWidth - 10, i * heightButton + 10);
 		glEnd();
 		glBegin(GL_QUADS);
-		glColor3f(0, 0.67, 0.887);
+			glColor3f(0, 0.67, 0.887);
 			glVertex2f(WinWidth - 10 - widthButton + 2, i * heightButton + 10 + 2);
-			glColor3f(0, 0.4, 0.67);
+			//glColor3f(0, 0.4, 0.67);
 			glVertex2f(WinWidth - 10 - widthButton + 2, (i + 1) * heightButton - 2);
 			glVertex2f(WinWidth - 10 - 2, (i + 1) * heightButton - 2);
-			glColor3f(0, 0.67, 0.887);
+			//glColor3f(0, 0.67, 0.887);
 			glVertex2f(WinWidth - 10 - 2, i * heightButton + 10 + 2);
 		glEnd();
 		glColor3f(0, 0, 0);
-		glRasterPos2f(WinWidth - 12 - (widthButton / 2) - strlen(menuArr[i].content) / 2 * 10, i * heightButton + 40);
-
-		for (int j = 0; j < strlen(menuArr[i].content); j++)
-		{
-			int asciicode = menuArr[i].content[j] & 0xFF;
-			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, asciicode);
-
-			//HWND dd = FindWindow(NULL, "HaNoI");
-			//HDC dc = GetDC(dd);
-			//TextOutA(dc, 10, 10, "asdfa", 0);
-		}
 	}
-
-	glutSwapBuffers();
+	//glutSwapBuffers();
+	glFinish();
+	RECT rc;
+	HFONT hfontArial = CreateFont(25, 0, FW_DONTCARE, FW_DONTCARE, FW_DONTCARE,
+		FALSE, FALSE, FALSE, RUSSIAN_CHARSET, OUT_DEFAULT_PRECIS,
+		CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_DONTCARE, "Arial Black");
+	SelectObject(wgldc, hfontArial);
+	SetTextColor(wgldc, RGB(122, 1, 161));
+	//SetBkMode(wgldc, TRANSPARENT);
+	SetBkColor(wgldc, RGB(0, 171, 226));
+	for (int i = 0; i < sizeof(menuArr) / sizeof(structMenuItem); i++)
+	{
+		SetRect(&rc, 0, i * 50 + 15, 2 * WinWidth - 10 - widthButton, (i + 1) * 50 + 15);
+		DrawText(wgldc, menuArr[i].content, -1, &rc, DT_CENTER);
+	}
 }
 
 int** InitData(int _n)
@@ -304,12 +313,30 @@ void Keyboard(unsigned char _key, int _x, int _y)
 		}
 		else if (rodUpNumber != -1) // если есть диск и верхний уже поднят
 		{
-			animateRingToXX = 0;
-			glutTimerFunc(10, AnimateRing, keynum);
+			if (MoveEnabled(keynum))
+			{
+				animateRingToXX = 0;
+				glutTimerFunc(10, AnimateRing, keynum);
+			}
 		}
 	}
 }
 
+bool MoveEnabled(int _rodnum)
+{
+	bool _result = true;
+	if (rodUpNumber > -1 && rodUpNumber != _rodnum && GetCountRingAtRod(_rodnum) > 0 && GetValAnimatedRing(rodUpNumber) > GetValAnimatedRing(_rodnum))
+	{
+		_result = false;
+	}
+	return _result;
+}
 
+char WideCharToChar(const wchar_t Value)
+{
+	char C[2];
+	WideCharToMultiByte(CP_ACP, 0, &Value, 1, C, 1, 0, 0);   // здесь происходит перевод символа
+	return C[0];
+}
 
 
