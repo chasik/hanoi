@@ -19,6 +19,8 @@ int animatedRodNum = 0, animatedRingNum = 0;
 
 int rodUpNumber = -1, rodDownNumber = -1;
 
+int iterationCount = 0;
+
 enum stateGame
 {
 	stop = 0,
@@ -32,6 +34,12 @@ enum modeGame
 	automatic = 1 
 };
 
+enum moveDiraction
+{
+	moveUp = 0,
+	moveDown = 1
+};
+
 struct structState
 {
 	int RingsCount = 4;
@@ -41,8 +49,15 @@ struct structState
 	stateGame stategame = stop;
 	modeGame modegame = manual;
 };
-
 structState stateProgram;
+
+struct DoGoArrItem
+{
+	int rodFrom;
+	int rodTo;
+};
+DoGoArrItem *motionArr;
+int motionArrCount;
 
 struct structMenuItem
 {
@@ -79,16 +94,19 @@ int GetIdAnimatedRing(int _rodnum);
 void SwapRingsAtRods(int _rodstart, int _rodfinish);
 bool MoveEnabled(int _rodnum);
 void timerForGame(int _value);
+void motionForAutomatic(moveDiraction _diraction);
 void ShowTime();
 void ShowMovesCount();
 void ChangeRingsCount();
 
 void StartNewGame();
+void StartNewGameAuto();
 void PauseGame();
 void ResumeGame();
 void ResetAllState();
 void ChangeMode();
 
+void MoveAutomatic(int _sizestack, int _fromindex, int _toindex);
 void SetSelectedMenuItem(int i);
 
 int** InitData(int _countdisk);
@@ -266,18 +284,22 @@ void AnimateRing(int _rodnum)
 	{
 		if ((GetIdAnimatedRing(_rodnum) + 1) * heightRing + animateRingToYY < topRod * heightRing)
 		{
-			glutTimerFunc(20, AnimateRing, _rodnum);
+			glutTimerFunc(30, AnimateRing, _rodnum);
 			animateRingToYY += 30;
 		}
 		else
+		{
 			rodUpNumber = _rodnum;
+			if (stateProgram.modegame == automatic)
+				motionForAutomatic(moveDown);
+		}
 	}
 	else if (rodDownNumber < 0)
 	{
 		if ((rodUpNumber < animatedRodNum && rodUpNumber * 250 + 155 + animateRingToXX < animatedRodNum * 250 + 155)
 			|| (rodUpNumber > animatedRodNum && rodUpNumber * 250 + 155 + animateRingToXX > animatedRodNum * 250 + 155))
 		{
-			glutTimerFunc(20, AnimateRing, _rodnum);
+			glutTimerFunc(30, AnimateRing, _rodnum);
 			if (abs((animatedRodNum * 250 + 155) - (rodUpNumber * 250 + 155 + animateRingToXX)) > 30)
 				animateRingToXX += 30 * (rodUpNumber > animatedRodNum ? -1 : 1);
 			else
@@ -286,7 +308,7 @@ void AnimateRing(int _rodnum)
 		else
 		{
 			rodDownNumber = _rodnum;
-			glutTimerFunc(10, AnimateRing, _rodnum);
+			glutTimerFunc(30, AnimateRing, _rodnum);
 		}
 	}
 	else
@@ -294,13 +316,15 @@ void AnimateRing(int _rodnum)
 		if ((GetIdAnimatedRing(_rodnum) * heightRing + animateRingToYY > (GetCountRingAtRod(rodDownNumber) + 1) * heightRing) // опускание на стержень, отличный от стартового
 			|| (rodUpNumber == rodDownNumber && (GetIdAnimatedRing(_rodnum) * heightRing + animateRingToYY >= (GetCountRingAtRod(rodDownNumber)) * heightRing))) // возврат на тот же (стартовый) стержень
 		{
-			glutTimerFunc(15, AnimateRing, _rodnum);
+			glutTimerFunc(30, AnimateRing, _rodnum);
 			animateRingToYY -= 30;
 		}
 		else
 		{
 			SwapRingsAtRods(rodUpNumber, rodDownNumber);
 			animatedRodNum = animatedRingNum = rodDownNumber = rodUpNumber = -1;
+			if (stateProgram.modegame == automatic && stateProgram.movescount < motionArrCount)
+				motionForAutomatic(moveUp);
 		}
 	}
 }
@@ -400,7 +424,10 @@ void Keyboard(unsigned char _key, int _x, int _y)
 			switch (stateProgram.stategame)
 			{
 			case stop:
-				StartNewGame();
+				if (stateProgram.modegame == manual)
+					StartNewGame();
+				else if (stateProgram.modegame == automatic)
+					StartNewGameAuto();
 				break;
 			case game: 
 				PauseGame();
@@ -447,7 +474,6 @@ void SKeyboard(int _key, int x, int y)
 				break;
 			}
 		}
-		//nodeToSelectMenuItem
 		break;
 	case GLUT_KEY_LEFT:
 		break;
@@ -460,7 +486,7 @@ void SKeyboard(int _key, int x, int y)
 void ChangeRingsCount()
 {
 	stateProgram.RingsCount++;
-	if (stateProgram.RingsCount > 10)
+	if (stateProgram.RingsCount > 12)
 		stateProgram.RingsCount = 3;
 	Rods = InitData(stateProgram.RingsCount);
 }
@@ -489,6 +515,24 @@ void timerForGame(int _value)
 		glutTimerFunc(1000, timerForGame, 10);
 	RenderScene();
 }
+
+void motionForAutomatic(moveDiraction _diraction)
+{
+	int rod;
+	if (_diraction == moveUp)
+		rod = motionArr[stateProgram.movescount + 1].rodFrom;
+	else if (_diraction == moveDown)
+		rod = motionArr[stateProgram.movescount + 1].rodTo;
+	char chRods;
+	if (rod == 0)
+		chRods = '1';
+	else if (rod == 1)
+		chRods = '2';
+	else if (rod == 2)
+		chRods = '3';
+	Keyboard(chRods, 0, 0);
+}
+
 void ShowTime()
 {
 	glColor3f(0, 0.29, 0.65);
@@ -510,6 +554,18 @@ void StartNewGame()
 	menuArr[0].statemenuitem = 0; menuArr[2].statemenuitem = 0; menuArr[3].statemenuitem = 0; menuArr[4].statemenuitem = 1; menuArr[5].statemenuitem = 0;
 	strcpy_s(menuArr[1].content, "Пауза");
 	glutTimerFunc(1000, timerForGame, 10);
+}
+
+void StartNewGameAuto()
+{
+	strcpy_s(menuArr[1].content, "Пауза");
+	menuArr[0].statemenuitem = 0; menuArr[2].statemenuitem = 0; menuArr[3].statemenuitem = 0; menuArr[4].statemenuitem = 0; menuArr[5].statemenuitem = 0;
+	iterationCount = 0;
+	motionArrCount = pow(2, stateProgram.RingsCount) - 1; // количество ходов по формуле (2 ^ n) - 1
+	motionArr = (DoGoArrItem*)malloc(motionArrCount * sizeof(DoGoArrItem));
+	MoveAutomatic(stateProgram.RingsCount, 0, 2); // запускаем просчет ходов и сохраняем их в массиве motionArr
+	stateProgram.stategame = game;
+	motionForAutomatic(moveUp);
 }
 
 void PauseGame()
@@ -551,46 +607,69 @@ void ChangeMode()
 	}
 }
 
+void MoveAutomatic(int _sizestack, int _fromindex, int _toindex)
+{
+	if (_sizestack == 0)
+		return;
+
+	int freeindex = -1;
+	for (int i = 0; i < 3; i++)
+	{
+		if (_fromindex != i && _toindex != i)
+		{
+			freeindex = i;
+			break;
+		}
+	}
+
+	MoveAutomatic(_sizestack - 1, _fromindex, freeindex);
+	iterationCount++;
+	motionArr[iterationCount].rodFrom = _fromindex;
+	motionArr[iterationCount].rodTo = _toindex;
+
+	MoveAutomatic(_sizestack - 1, freeindex, _toindex);
+}
+
 GLvoid BuildFont(GLvoid)  // Построение нашего растрового шрифта
 {
-	HFONT  font;					// Идентификатор фонта
-	base = glGenLists(224);			// Выделим место для 224 символов ( НОВОЕ )
-		font = CreateFont(-22,		// Высота фонта ( НОВОЕ )
-			0,						// Ширина фонта
-			0,						// Угол отношения
-			0,						// Угол наклона
-			FW_BOLD,				// Ширина шрифта
-			FALSE,					// Курсив
-			FALSE,					// Подчеркивание
-			FALSE,					// Перечеркивание
+	HFONT  font;						// Идентификатор шрифта
+	base = glGenLists(224);				// Выделим место для 224 символов
+		font = CreateFont(-22,			// Высота шрифта
+			0,							// Ширина шрифта
+			0,							// Угол отношения
+			0,							// Угол наклона
+			FW_BOLD,					// Ширина шрифта
+			FALSE,						// Курсив
+			FALSE,						// Подчеркивание
+			FALSE,						// Перечеркивание
 			RUSSIAN_CHARSET,			// Идентификатор набора символов
-			OUT_TT_PRECIS,			// Точность вывода
-			CLIP_DEFAULT_PRECIS,    // Точность отсечения
-			ANTIALIASED_QUALITY,    // Качество вывода
+			OUT_TT_PRECIS,				// Точность вывода
+			CLIP_DEFAULT_PRECIS,		// Точность отсечения
+			ANTIALIASED_QUALITY,		// Качество вывода
 			FF_DONTCARE | DEFAULT_PITCH,  // Семейство и шаг
-			"Courier New"			// Имя шрифта
+			"Courier New"				// Имя шрифта
 		);      
-	SelectObject(wgldc, font);        // Выбрать шрифт, созданный нами ( НОВОЕ )
-	wglUseFontBitmaps(wgldc, 32, 224, base); // Построить 224 символов начиная с пробела ( НОВОЕ )
+	SelectObject(wgldc, font);					// Выбрать шрифт, созданный нами
+	wglUseFontBitmaps(wgldc, 32, 224, base);	// Построить 224 символов начиная с пробела
 }
 
-GLvoid glPrint(const char *fmt, ...)        // Заказная функция «Печати» GL
+GLvoid glPrint(const char *fmt, ...)        // функция «Печати»
 {
-	char text[256];      // Место для нашей строки
-	va_list ap;          // Указатель на список аргументов
-	if (fmt == NULL)     // Если нет текста
-		return;            // Ничего не делать
-	va_start(ap, fmt);           // Разбор строки переменных
-	vsprintf_s(text, fmt, ap); // И конвертирование символов в реальные коды
-	va_end(ap);                  // Результат помещается в строку
-	glPushAttrib(GL_LIST_BIT);      // Протолкнуть биты списка отображения ( НОВОЕ )
-	glListBase(base - 32);          // Задать базу символа в 32 ( НОВОЕ )
-	glCallLists(strlen(text), GL_UNSIGNED_BYTE, text);// Текст списками отображения(НОВОЕ)
-	glPopAttrib(); // Возврат битов списка отображения ( НОВОЕ )
+	char text[256];							// Место для нашей строки
+	va_list ap;								// Указатель на список аргументов
+	if (fmt == NULL)						// Если нет текста
+		return;								// Ничего не делать
+	va_start(ap, fmt);						// Разбор строки переменных
+	vsprintf_s(text, fmt, ap);				// И конвертирование символов в реальные коды
+	va_end(ap);								// Результат помещается в строку
+	glPushAttrib(GL_LIST_BIT);				// Протолкнуть биты списка отображения
+	glListBase(base - 32);					// Задать базу символа в
+	glCallLists(strlen(text), GL_UNSIGNED_BYTE, text); // Текст списками отображения
+	glPopAttrib();							// Возврат битов списка отображения
 }
 
-GLvoid KillFont(GLvoid)            // Удаление шрифта
+GLvoid KillFont(GLvoid)					// Удаление шрифта
 {
-	glDeleteLists(base, 224);        // Удаление всех 224 списков отображения ( НОВОЕ )
+	glDeleteLists(base, 224);			// Удаление всех 224 списков отображения ( НОВОЕ )
 }
 
