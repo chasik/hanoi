@@ -1,40 +1,40 @@
 #include <windows.h>
 #include <math.h>
 #include <stdio.h>
-#include <math.h>
 //#include <conio.h>
+#include <math.h>
 #include <iostream> // strlen
 #include "glut.h"
-
-// мои заголовочные файлы
 
 GLuint  base;
 HDC wgldc;
 int **Rods;
 
-float WinWidth = 1000, WinHeight = 500;
-float widthRing = 200, heightRing = 30;
-float animateRingToYY = 0, animateRingToXX = 0, topRod = 13;
-int animatedRodNum = 0, animatedRingNum = 0;
+float WinWidth = 1000, WinHeight = 500;		// размер окна
+float widthRing = 200, heightRing = 30;		// базовая ширина и высота диска
+float widthButton = 180, heightButton = 50; // размеры кнопок (пунктов меню)
+float widthRod = 12, heightRod = 380;		// ширина основы стержня и высота стержня
 
-int rodUpNumber = -1, rodDownNumber = -1;
+float animateRingToYY = 0, animateRingToXX = 0, topRod = 13;	// --------------------------------------------
+int animatedRodNum = 0, animatedRingNum = 0;					// переменные для анимации (перемещение дисков)
+int rodUpNumber = -1, rodDownNumber = -1;						// --------------------------------------------
 
 int iterationCount = 0;
 
-enum stateGame
+enum stateGame // перечисление статуса игры
 {
 	stop = 0,
 	game = 1,
 	pause = 2,
 };
 
-enum modeGame
+enum modeGame // перечисление для хранения режима игры
 {
 	manual = 0,
 	automatic = 1 
 };
 
-enum moveDiraction
+enum moveDiraction // направление двежения
 {
 	moveUp = 0,
 	moveDown = 1
@@ -49,25 +49,26 @@ struct structState
 	stateGame stategame = stop;
 	modeGame modegame = manual;
 };
-structState stateProgram;
 
-struct DoGoArrItem
+structState stateProgram; // статус состояния программы
+
+struct DoGoArrItem // структура для хранения одного хода
 {
 	int rodFrom;
 	int rodTo;
 };
-DoGoArrItem *motionArr;
-int motionArrCount;
+DoGoArrItem *motionArr; // массив расчитанных ходов
+int motionArrCount; // расчетное количество ходов по формуле 2 в степени diskcount минус еденица
 
-struct structMenuItem
+struct structMenuItem // структура для хранения информации об одном элементе меню
 {
-	char name[20];
-	char content[20];
-	int statemenuitem;
-	float posX, posY;
-	float width, height;
+	char name[20];		// имя для определения выбранного меню
+	char content[20];	// отображаемое название пункта меню (кнопки)
+	int statemenuitem;	// состояние кнопки
 };
 
+
+// массив с меню (кнопками)
 structMenuItem menuArr[6] = { { "mode", "Ручками", 2 }
 							, { "start", "Начать", 1 }
 							, { "reset", "Сброс", 0 }
@@ -81,69 +82,83 @@ structMenuItem menuArr[6] = { { "mode", "Ручками", 2 }
 // --------------------------------------------------------------------------------------------------------------
 void RenderScene();
 
+// --------------------------------------------------------------------------------------------------------
+// функции для отображения текста (в том числе и кириллицы). Урок NeHe № 13
+// --------------------------------------------------------------------------------------------------------
 GLvoid BuildFont(GLvoid);
 GLvoid KillFont(GLvoid);
 GLvoid glPrint(const char *fmt, ...);
 
-void Keyboard(unsigned char _key, int _x, int _y);
-void SKeyboard(int key, int x, int y);
-void AnimateRing(int _rodnum);
-int GetCountRingAtRod(int _rodnum);
-int GetValAnimatedRing(int _rodnum);
-int GetIdAnimatedRing(int _rodnum);
-void SwapRingsAtRods(int _rodstart, int _rodfinish);
-bool MoveEnabled(int _rodnum);
-void timerForGame(int _value);
-void motionForAutomatic(moveDiraction _diraction);
-void ShowTime();
-void ShowMovesCount();
-void ChangeRingsCount();
+void SetSelectedMenuItem(int i); // функция, переводящая пункт в меню в "активное" (выбранное) состояние
 
-void StartNewGame();
-void StartNewGameAuto();
-void PauseGame();
-void ResumeGame();
-void ResetAllState();
-void ChangeMode();
+int** InitData(int _countdisk); // инициализация двухмерного массива для хранения стержней с дисками на них
 
-void MoveAutomatic(int _sizestack, int _fromindex, int _toindex);
-void SetSelectedMenuItem(int i);
+void Keyboard(unsigned char _key, int _x, int _y);	// glut - обработка нажатия клавиш (символьные + Enter)
+void SKeyboard(int key, int x, int y);				// glut - обработка нажатия клавиш "стрелок"
 
-int** InitData(int _countdisk);
+
+void AnimateRing(int _rodnum);							// данная функция полностью отвечает за движения диска вверх, в сторону и вниз.
+
+int GetCountRingAtRod(int _rodnum);						// получаем кол-во дисков на указаном стержне
+int GetValAnimatedRing(int _rodnum);					// функция возвращает "ширину" диска
+int GetIdAnimatedRing(int _rodnum);						// а эта - номер анимированного диска
+void SwapRingsAtRods(int _rodstart, int _rodfinish);	// "переброс" диска с одного стержня на другой (номера стержней - входные параметры)
+bool MoveEnabled(int _rodnum);							// функция вовзращает truе, если активированный диск можно положить на указанный стержень - иначе false
+
+void timerForGame(int _value); // функция таймера (расчет потраченного времени)
+void motionForAutomatic(moveDiraction _diraction);	// данная ф-ия "эмитирует" нажатие клавиш в зависимости от заданного направления. Таким образом реализуем авто режим, не переписывая код,
+													// не придумывая еще ф-ию для авто режима
+void ShowTime();		// отображение времени
+void ShowMovesCount();	// отображение количества ходов
+void ChangeRingsCount();// отбработка нажатия кнопки изменения кол-ва дисков
+
+void StartNewGame();	// запуск игры при ручном режиме
+void StartNewGameAuto();// запуск игры в автомат. режиме
+void PauseGame();		// пауза в игре (как ручн. режим, так и авто)
+void ResumeGame();		// возобновление игры после паузы
+void ResetAllState();	// сброс
+void ChangeMode();		// изменение режима с ручного на авто и обратно
+
+void MoveAutomatic(int _sizestack, int _fromindex, int _toindex); // функция для расчета последовательности ходов. Используется рекурсивный метод решения.
 
 void main(){
-	Rods = InitData(stateProgram.RingsCount);
+	Rods = InitData(stateProgram.RingsCount); // первичная инициализация дисков при запуске программы
+
+	//char fileopt[] = "options.ini";
+
+	// Блок начальной инициализации OpenGl при помощи библиотеки Glut. Создание окна.
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 	glutInitWindowSize(WinWidth, WinHeight);
 	glutInitWindowPosition(100, 200);
-	glutCreateWindow("HaNoI");
-	wgldc = wglGetCurrentDC();
+	glutCreateWindow("Ханойская башня. Автор: Костикова Мария");
 	glMatrixMode(GL_PROJECTION);
+
 	glLoadIdentity();
 	glOrtho(0.0, WinWidth, WinHeight, 0.0, -1.0, 1.0);
-	glutKeyboardFunc(Keyboard); // работа с клавиатурой (1,2,3)
-	glutSpecialFunc(SKeyboard); // работа с клавиатурой (движение по меню с помощью стрелок)
 	glClearColor(0.85, 0.85, 0.85, 1); // цвет фона делаем серым (R=G=B)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//char fileopt[] = "options.ini";
+
 	glClearDepth(1.0f);         // Установка буфера глубины
 	glEnable(GL_DEPTH_TEST);    // Разрешение теста глубины
 	glDepthFunc(GL_LEQUAL);     // Тип теста глубины
-	// Действительно хорошие вычисления перспективы
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-	BuildFont();
-	glutDisplayFunc(RenderScene);
-	RenderScene();
-	glutMainLoop();
-	KillFont(); // удаляем шрифт
+	glutKeyboardFunc(Keyboard); // назначение функции обратного вызова для работы с клавиатурой (1,2,3)
+	glutSpecialFunc(SKeyboard); // ....... для работы с клавиатурой (движение по меню с помощью стрелок)
+
+	wgldc = wglGetCurrentDC(); // получение контекста устройства (windows API). Нужен для установки шрифта.
+	BuildFont(); // построение шрифта
+
+	glutDisplayFunc(RenderScene);	// назначение функции рендеринга (прорисовки) экрана
+	RenderScene();					// принудительная первоначальная прорисовка экрана
+	glutMainLoop();					// glut - цикл обработки событий, получаемых от интерфейса (окна)
+
+	KillFont(); // удаляем шрифт по завершению
 	return;
 }
 
 void RenderScene()
 {
-	float widthButton = 180, heightButton = 50;
-	float widthRod = 12, heightRod = 380;
 	float maxWidthRing = 220, minWidthRing = 120;
 	float stepWidthRing = (maxWidthRing - minWidthRing) / stateProgram.RingsCount;
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Очистка экран и буфера глубины
@@ -172,14 +187,14 @@ void RenderScene()
 		for (int j = 0; j < 13; j++)
 			a[i][j] = Rods[i][j];
 	}
-	for (int rodNumber = 0; rodNumber < 3; rodNumber++)
+	for (int rodNumber = 0; rodNumber < 3; rodNumber++)		// цикл по количеству стержней
 	{
 		bool rodMoveEnabled = MoveEnabled(rodNumber);
 
 		int countringatrod = GetCountRingAtRod(rodNumber);
 		for (int ringNumber = 0; ringNumber < countringatrod; ringNumber++)
 		{
-			int ringNum = Rods[rodNumber][ringNumber]; // ширина кольца (от 1 до N, где N - количество дисков)
+			int ringNum = Rods[rodNumber][ringNumber];		// ширина кольца (от 1 до N, где N - количество дисков)
 			if (ringNum != 0)
 			{
 				int centerRod = rodNumber * 250 + 155;
@@ -193,69 +208,87 @@ void RenderScene()
 					animateYY = animateRingToYY;
 				}
 				glBegin(GL_QUADS);
-				glColor3f(0.3, 0.3, 0.4);
-				glVertex2f(centerRod - widthRing / 2 + stepw + animateXX, 451 - ringNumber * heightRing - animateYY);
-				glVertex2f(centerRod - widthRing / 2 + stepw + animateXX, 451 - (ringNumber + 1) * heightRing - animateYY);
-				glVertex2f(centerRod + widthRing / 2 - stepw + animateXX, 451 - (ringNumber + 1) * heightRing - animateYY);
-				glVertex2f(centerRod + widthRing / 2 - stepw + animateXX, 451 - (ringNumber)* heightRing - animateYY);
+					glColor3f(0.3, 0.3, 0.4);
+					glVertex2f(centerRod - widthRing / 2 + stepw + animateXX, 451 - ringNumber * heightRing - animateYY);
+					glVertex2f(centerRod - widthRing / 2 + stepw + animateXX, 451 - (ringNumber + 1) * heightRing - animateYY);
+					glVertex2f(centerRod + widthRing / 2 - stepw + animateXX, 451 - (ringNumber + 1) * heightRing - animateYY);
+					glVertex2f(centerRod + widthRing / 2 - stepw + animateXX, 451 - (ringNumber)* heightRing - animateYY);
 
-				rodMoveEnabled ? glColor3f(0.04 * (stateProgram.RingsCount * ringNum) + 0.1, 0.03 * (stateProgram.RingsCount - ringNum) + 0.1, 0.02 * (stateProgram.RingsCount - ringNum) + 0.1)
-					: glColor3f(0.5, 0.5, 0.5);
-				glVertex2f(centerRod - widthRing / 2 + stepw + 1 + animateXX, 451 - (ringNumber)* heightRing - 1 - animateYY);
-				glVertex2f(centerRod - widthRing / 2 + stepw + 1 + animateXX, 451 - (ringNumber + 1) * heightRing + 1 - animateYY);
-				rodMoveEnabled ? glColor3f(0.04 * (stateProgram.RingsCount - ringNum) + 0.01, 0.03 * (stateProgram.RingsCount - ringNum) + 0.01, 0.02 * (stateProgram.RingsCount - ringNum) + 0.01)
-					: glColor3f(0.2, 0.2, 0.2);
-				glVertex2f(centerRod + widthRing / 2 - stepw - 1 + animateXX, 451 - (ringNumber + 1) * heightRing + 1 - animateYY);
-				glVertex2f(centerRod + widthRing / 2 - stepw - 1 + animateXX, 451 - (ringNumber)* heightRing - 1 - animateYY);
+					rodMoveEnabled ? glColor3f(0.04 * (stateProgram.RingsCount * ringNum) + 0.1, 0.03 * (stateProgram.RingsCount - ringNum) + 0.1, 0.02 * (stateProgram.RingsCount - ringNum) + 0.1)
+						: glColor3f(0.5, 0.5, 0.5);
+					glVertex2f(centerRod - widthRing / 2 + stepw + 1 + animateXX, 451 - (ringNumber)* heightRing - 1 - animateYY);
+					glVertex2f(centerRod - widthRing / 2 + stepw + 1 + animateXX, 451 - (ringNumber + 1) * heightRing + 1 - animateYY);
+					rodMoveEnabled ? glColor3f(0.04 * (stateProgram.RingsCount - ringNum) + 0.01, 0.03 * (stateProgram.RingsCount - ringNum) + 0.01, 0.02 * (stateProgram.RingsCount - ringNum) + 0.01)
+						: glColor3f(0.2, 0.2, 0.2);
+					glVertex2f(centerRod + widthRing / 2 - stepw - 1 + animateXX, 451 - (ringNumber + 1) * heightRing + 1 - animateYY);
+					glVertex2f(centerRod + widthRing / 2 - stepw - 1 + animateXX, 451 - (ringNumber)* heightRing - 1 - animateYY);
 				glEnd();
 			}
 		}
 	}
 
-	for (int i = 0; i < sizeof(menuArr) / sizeof(structMenuItem); i++)
+	for (int i = 0; i < sizeof(menuArr) / sizeof(structMenuItem); i++)		// цикл по кол-ву пунктов меню для их отрисовки 
 	{
+		// в зависимости от состояния используем разный цвет
 		if (menuArr[i].statemenuitem == 1)
 			glColor3f(0, 0.443, 0.74);
 		else if (menuArr[i].statemenuitem == 2)
 			glColor3f(0.004, 0.6, 0.145);
 		else 
 			glColor3f(0.443, 0.443, 0.443);
-		glBegin(GL_QUADS);
+
+		glBegin(GL_QUADS); // прорисовка "подложки" под кнопку - для более темного "бортика" по периметру
 			glVertex2f(WinWidth - 10 - widthButton, i * heightButton + 10);
 			glVertex2f(WinWidth - 10 - widthButton, (i + 1) * heightButton);
 			glVertex2f(WinWidth - 10, (i + 1) * heightButton);
 			glVertex2f(WinWidth - 10, i * heightButton + 10);
 		glEnd();
-		if (menuArr[i].statemenuitem == 1)
-			glColor3f(0, 0.67, 0.887);
-		else if (menuArr[i].statemenuitem == 2)
-			glColor3f(0, 0.925, 0.098);
-		else 
-			glColor3f(0.67, 0.67, 0.67);
+
 		glBegin(GL_QUADS);
+			// в зависимости от состояния используем разный цвет
+			if (menuArr[i].statemenuitem == 1)
+				glColor3f(0, 0.77, 0.887);
+			else if (menuArr[i].statemenuitem == 2)
+				glColor3f(0, 0.97, 0.098);
+			else
+				glColor3f(0.67, 0.67, 0.67);
+			glVertex2f(WinWidth - 10 - 2, i * heightButton + 10 + 2);
 			glVertex2f(WinWidth - 10 - widthButton + 2, i * heightButton + 10 + 2);
+
+			// снова разный цвет для состойний кнопки, но это уже для градиента кнопок
+			if (menuArr[i].statemenuitem == 1)
+				glColor3f(0, 0.45, 0.887);
+			else if (menuArr[i].statemenuitem == 2)
+				glColor3f(0, 0.5, 0.098);
+			else
+				glColor3f(0.5, 0.5, 0.5);
+
 			glVertex2f(WinWidth - 10 - widthButton + 2, (i + 1) * heightButton - 2);
 			glVertex2f(WinWidth - 10 - 2, (i + 1) * heightButton - 2);
-			glVertex2f(WinWidth - 10 - 2, i * heightButton + 10 + 2);
 		glEnd();
 
+		// цвет шрифта кнопки в зависимости от состояния
 		if (menuArr[i].statemenuitem == 1)
 			glColor3f(0, 0.29, 0.65);
 		else if (menuArr[i].statemenuitem == 2)
 			glColor3f(0, 0.397, 0.094);
 		else
-			glColor3f(0.5, 0.5, 0.5);
+			glColor3f(0.4, 0.4, 0.4);
 		glRasterPos2f(WinWidth - 10 - widthButton / 2 - strlen(menuArr[i].content) * 6.4, i * 50 + 35);
-		if (i == 5)
+
+		if (strcmp(menuArr[i].name, "diskcount") == 0)	// если это кнопка "кол-во дисков" используем немного другой вид подписи, так как передается кол-во дисков
 			glPrint(menuArr[i].content, stateProgram.RingsCount);
-		else 
+		else																			// для всех остальных - просто вывод надписи
 			glPrint(menuArr[i].content);
 	}
-	if (stateProgram.timercounter > 0)
+
+	if (stateProgram.timercounter > 0)	// если наш счетчик времени активирован (больше нуля), то отобразим его значение в формате hh:mm:ss
 		ShowTime();
 	if (stateProgram.stategame != stop)
-		ShowMovesCount();
-	glutSwapBuffers();
+		ShowMovesCount();				// то же сделаем и для кол-ва ходов, если игра активна
+
+	glutSwapBuffers();					// glut - так как мы используем opengl в режиме с двойным буфером (отрисовка происходит на заднем плане) 
+										// - поменяем планы местами и выведем на передний план то что прорисовали до этого момента
 }
 
 int** InitData(int _n)
@@ -280,7 +313,7 @@ void AnimateRing(int _rodnum)
 {
 	animatedRodNum = _rodnum;
 	glutPostRedisplay();
-	if (rodUpNumber < 0)
+	if (rodUpNumber < 0) // это анимация ВВЕРХ
 	{
 		if ((GetIdAnimatedRing(_rodnum) + 1) * heightRing + animateRingToYY < topRod * heightRing)
 		{
@@ -294,7 +327,7 @@ void AnimateRing(int _rodnum)
 				motionForAutomatic(moveDown);
 		}
 	}
-	else if (rodDownNumber < 0)
+	else if (rodDownNumber < 0) // это анимация В СТОРОНУ
 	{
 		if ((rodUpNumber < animatedRodNum && rodUpNumber * 250 + 155 + animateRingToXX < animatedRodNum * 250 + 155)
 			|| (rodUpNumber > animatedRodNum && rodUpNumber * 250 + 155 + animateRingToXX > animatedRodNum * 250 + 155))
@@ -311,7 +344,7 @@ void AnimateRing(int _rodnum)
 			glutTimerFunc(30, AnimateRing, _rodnum);
 		}
 	}
-	else
+	else // а это финальная анимация диска ВНИЗ
 	{
 		if ((GetIdAnimatedRing(_rodnum) * heightRing + animateRingToYY > (GetCountRingAtRod(rodDownNumber) + 1) * heightRing) // опускание на стержень, отличный от стартового
 			|| (rodUpNumber == rodDownNumber && (GetIdAnimatedRing(_rodnum) * heightRing + animateRingToYY >= (GetCountRingAtRod(rodDownNumber)) * heightRing))) // возврат на тот же (стартовый) стержень
@@ -376,7 +409,7 @@ int GetIdAnimatedRing(int _rodnum)
 
 void Keyboard(unsigned char _key, int _x, int _y)
 {
-	if (((_key == '1') || (_key == '2') || (_key == '3')) && stateProgram.stategame == game)
+	if (((_key == '1') || (_key == '2') || (_key == '3')) && stateProgram.stategame == game) // если это нажатая одна из трех цифр при этом статус программы = game (то есть игра начата)
 	{
 		int keynum = 0;
 		switch (_key)
@@ -415,7 +448,7 @@ void Keyboard(unsigned char _key, int _x, int _y)
 			}
 		}
 	}
-	else if (_key == 13) // нажата клавиша Enter
+	else if (_key == 13) // нажата клавиша Enter - анализируем пункт меню, который вабран на данный момент
 	{
 		if (strcmp(menuArr[stateProgram.nodeToSelectMenuItem].name, "diskcount") == 0)
 			ChangeRingsCount();
@@ -483,12 +516,12 @@ void SKeyboard(int _key, int x, int y)
 	RenderScene();
 }
 
-void ChangeRingsCount()
+void ChangeRingsCount() // смена кол-ва дисков "по кругу" - дойдя до 12 сбарсываем на 3
 {
 	stateProgram.RingsCount++;
 	if (stateProgram.RingsCount > 12)
 		stateProgram.RingsCount = 3;
-	Rods = InitData(stateProgram.RingsCount);
+	Rods = InitData(stateProgram.RingsCount); // ... и снова инициализируем начальное состояние дисков на стержнях
 }
 
 bool MoveEnabled(int _rodnum)
