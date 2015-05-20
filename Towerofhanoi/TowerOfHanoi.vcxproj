@@ -70,7 +70,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="glprints.cpp" />
     <ClCompile Include="hanoi.cpp" />
+    <ClCompile Include="showinfo.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="glprints.h" />
+    <ClInclude Include="showinfo.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

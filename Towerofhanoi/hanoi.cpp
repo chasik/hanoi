@@ -1,13 +1,15 @@
 #include <windows.h>
 #include <math.h>
 #include <stdio.h>
-//#include <conio.h>
 #include <math.h>
 #include <iostream> // strlen
 #include "glut.h"
+#include "showinfo.h"
 
-GLuint  base;
-HDC wgldc;
+#include "glprints.h"
+
+structShowInfo stateShowInfo;
+
 int **Rods;
 
 float WinWidth = 1000, WinHeight = 500;		// размер окна
@@ -44,37 +46,43 @@ struct structState
 {
 	int RingsCount = 4;
 	int nodeToSelectMenuItem = 0;
-	float timercounter = 0;
-	int movescount = 0;
+	int timercounter = 0;
+	int movescount = -1;
 	stateGame stategame = stop;
 	modeGame modegame = manual;
 };
 
-structState stateProgram; // статус состояния программы
+structState stateProgram;	// статус состояния программы
 
-struct DoGoArrItem // структура для хранения одного хода
+struct DoGoArrItem			// структура для хранения одного хода
 {
 	int rodFrom;
 	int rodTo;
 };
-DoGoArrItem *motionArr; // массив расчитанных ходов
-int motionArrCount; // расчетное количество ходов по формуле 2 в степени diskcount минус еденица
+DoGoArrItem *motionArr;		// массив расчитанных ходов
+int motionArrCount;			// расчетное количество ходов по формуле 2 в степени diskcount минус еденица
 
-struct structMenuItem // структура для хранения информации об одном элементе меню
+enum stateButton			// перечисление для хранения состояния кнопки
 {
-	char name[20];		// имя для определения выбранного меню
-	char content[20];	// отображаемое название пункта меню (кнопки)
-	int statemenuitem;	// состояние кнопки
+	disable = 0,
+	enable = 1,
+	activate = 2
 };
 
+struct structMenuItem		// структура для хранения информации об одном элементе меню
+{
+	char name[20];			// имя для определения выбранного меню
+	char content[20];		// отображаемое название пункта меню (кнопки)
+	stateButton statemenuitem;	// состояние кнопки
+};
 
 // массив с меню (кнопками)
-structMenuItem menuArr[6] = { { "mode", "Ручками", 2 }
-							, { "start", "Начать", 1 }
-							, { "reset", "Сброс", 0 }
-							, { "load", "Загрузить", 1 }
-							, { "save", "Сохранить", 0 }
-							, { "diskcount", "Дисков %u", 1 }
+structMenuItem menuArr[6] = { { "mode", "Ручками", activate }
+							, { "start", "Начать", enable }
+							, { "reset", "Сброс", disable }
+							, { "load", "Загрузить", enable }
+							, { "save", "Сохранить", disable }
+							, { "diskcount", "Дисков %u", enable }
 };
 
 // --------------------------------------------------------------------------------------------------------------
@@ -82,20 +90,12 @@ structMenuItem menuArr[6] = { { "mode", "Ручками", 2 }
 // --------------------------------------------------------------------------------------------------------------
 void RenderScene();
 
-// --------------------------------------------------------------------------------------------------------
-// функции для отображения текста (в том числе и кириллицы). Урок NeHe № 13
-// --------------------------------------------------------------------------------------------------------
-GLvoid BuildFont(GLvoid);
-GLvoid KillFont(GLvoid);
-GLvoid glPrint(const char *fmt, ...);
-
 void SetSelectedMenuItem(int i); // функция, переводящая пункт в меню в "активное" (выбранное) состояние
 
 int** InitData(int _countdisk); // инициализация двухмерного массива для хранения стержней с дисками на них
 
 void Keyboard(unsigned char _key, int _x, int _y);	// glut - обработка нажатия клавиш (символьные + Enter)
 void SKeyboard(int key, int x, int y);				// glut - обработка нажатия клавиш "стрелок"
-
 
 void AnimateRing(int _rodnum);							// данная функция полностью отвечает за движения диска вверх, в сторону и вниз.
 
@@ -121,10 +121,11 @@ void ChangeMode();		// изменение режима с ручного на авто и обратно
 
 void MoveAutomatic(int _sizestack, int _fromindex, int _toindex); // функция для расчета последовательности ходов. Используется рекурсивный метод решения.
 
+void LoadGame();						// функция загрузки ранее сохраненного состояния игры
+void SaveGame();						// сохранение состояния игры
+
 void main(){
 	Rods = InitData(stateProgram.RingsCount); // первичная инициализация дисков при запуске программы
-
-	//char fileopt[] = "options.ini";
 
 	// Блок начальной инициализации OpenGl при помощи библиотеки Glut. Создание окна.
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
@@ -136,24 +137,22 @@ void main(){
 	glLoadIdentity();
 	glOrtho(0.0, WinWidth, WinHeight, 0.0, -1.0, 1.0);
 	glClearColor(0.85, 0.85, 0.85, 1); // цвет фона делаем серым (R=G=B)
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glClearDepth(1.0f);         // Установка буфера глубины
-	glEnable(GL_DEPTH_TEST);    // Разрешение теста глубины
-	glDepthFunc(GL_LEQUAL);     // Тип теста глубины
+	glClearDepth(1.0f);				// Установка буфера глубины
+	glEnable(GL_DEPTH_TEST);		// Разрешение теста глубины
+	glDepthFunc(GL_LEQUAL);			// Тип теста глубины
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-	glutKeyboardFunc(Keyboard); // назначение функции обратного вызова для работы с клавиатурой (1,2,3)
-	glutSpecialFunc(SKeyboard); // ....... для работы с клавиатурой (движение по меню с помощью стрелок)
+	glutKeyboardFunc(Keyboard);		// назначение функции обратного вызова для работы с клавиатурой (1,2,3)
+	glutSpecialFunc(SKeyboard);		// ....... для работы с клавиатурой (движение по меню с помощью стрелок)
 
-	wgldc = wglGetCurrentDC(); // получение контекста устройства (windows API). Нужен для установки шрифта.
-	BuildFont(); // построение шрифта
+	BuildFont();					// построение шрифта
 
 	glutDisplayFunc(RenderScene);	// назначение функции рендеринга (прорисовки) экрана
 	RenderScene();					// принудительная первоначальная прорисовка экрана
 	glutMainLoop();					// glut - цикл обработки событий, получаемых от интерфейса (окна)
 
-	KillFont(); // удаляем шрифт по завершению
+	KillFont();						// удаляем шрифт по завершению
 	return;
 }
 
@@ -167,26 +166,30 @@ void RenderScene()
 	{
 		int i = rodNumber + 1;
 		glBegin(GL_QUADS);
-		glColor3f(0.6, 0.6, 0.6);
-		glVertex2f(i * 250 - 100, 69);
-		glVertex2f(i * 250 - 100, 69 + heightRod);
-		glColor3f(0.3, 0.3, 0.3);
-		glVertex2f(i * 250 - 100 + widthRod, 69 + heightRod);
-		glVertex2f(i * 250 - 100 + widthRod, 69);
-		glColor3f(0.6, 0.6, 0.6);
-		glVertex2f(i * 250 - 217, 69 + heightRod);
-		glVertex2f(i * 250 - 217, 73 + heightRod + widthRod);
-		glColor3f(0.3, 0.3, 0.3);
-		glVertex2f(i * 250 + 27, 73 + heightRod + widthRod);
-		glVertex2f(i * 250 + 27, 69 + heightRod);
+			glColor3f(0.6, 0.6, 0.6);
+			glVertex2f(i * 250 - 100, 69);
+			glVertex2f(i * 250 - 100, 69 + heightRod);
+			glColor3f(0.3, 0.3, 0.3);
+			glVertex2f(i * 250 - 100 + widthRod, 69 + heightRod);
+			glVertex2f(i * 250 - 100 + widthRod, 69);
+			glColor3f(0.6, 0.6, 0.6);
+			glVertex2f(i * 250 - 217, 69 + heightRod);
+			glVertex2f(i * 250 - 217, 73 + heightRod + widthRod);
+			glColor3f(0.3, 0.3, 0.3);
+			glVertex2f(i * 250 + 27, 73 + heightRod + widthRod);
+			glVertex2f(i * 250 + 27, 69 + heightRod);
 		glEnd();
+		glColor3f(0, 0.2, 0.9);
+		glRasterPos2f(i * 250 - 100, 490);
+		glPrint("%u", i);
 	}
-	int a[3][13];
-	for (int i = 0; i < 3; i++)
-	{
-		for (int j = 0; j < 13; j++)
-			a[i][j] = Rods[i][j];
-	}
+	// блок для отладки - можно удалить
+	//int a[3][13];
+	//for (int i = 0; i < 3; i++)
+	//{
+	//	for (int j = 0; j < 13; j++)
+	//		a[i][j] = Rods[i][j];
+	//}
 	for (int rodNumber = 0; rodNumber < 3; rodNumber++)		// цикл по количеству стержней
 	{
 		bool rodMoveEnabled = MoveEnabled(rodNumber);
@@ -284,8 +287,11 @@ void RenderScene()
 
 	if (stateProgram.timercounter > 0)	// если наш счетчик времени активирован (больше нуля), то отобразим его значение в формате hh:mm:ss
 		ShowTime();
-	if (stateProgram.stategame != stop)
+	if (stateProgram.movescount > -1)
 		ShowMovesCount();				// то же сделаем и для кол-ва ходов, если игра активна
+
+	if (stateShowInfo.timer > 0 && stateShowInfo.timer < stateShowInfo.timerlimit)
+		ShowInfo(&stateShowInfo);
 
 	glutSwapBuffers();					// glut - так как мы используем opengl в режиме с двойным буфером (отрисовка происходит на заднем плане) 
 										// - поменяем планы местами и выведем на передний план то что прорисовали до этого момента
@@ -298,7 +304,7 @@ int** InitData(int _n)
 	for (int i = 0; i < 3; i++)
 	{
 		_rods[i] = (int*)malloc(13 * sizeof(int));
-		for (int j = 0; j < stateProgram.RingsCount; j++)
+		for (int j = 0; j < 13; j++)
 		{
 			if (i == 0)
 				_rods[i][j] = _n - j > 0 ? _n - j : 0;
@@ -426,12 +432,6 @@ void Keyboard(unsigned char _key, int _x, int _y)
 		}
 		if (rodUpNumber == -1) // если есть диск и не один диск еще не поднят
 		{
-			int a[3][13];
-			for (int i = 0; i < 3; i++)
-			{
-				for (int j = 0; j < 13; j++)
-					a[i][j] = Rods[i][j];
-			}
 			animatedRingNum = GetValAnimatedRing(keynum);
 			animateRingToYY = 0;
 			animateRingToXX = 0;
@@ -457,6 +457,7 @@ void Keyboard(unsigned char _key, int _x, int _y)
 			switch (stateProgram.stategame)
 			{
 			case stop:
+				animatedRodNum = animatedRingNum = rodDownNumber = rodUpNumber = -1;
 				if (stateProgram.modegame == manual)
 					StartNewGame();
 				else if (stateProgram.modegame == automatic)
@@ -477,6 +478,14 @@ void Keyboard(unsigned char _key, int _x, int _y)
 		else if (strcmp(menuArr[stateProgram.nodeToSelectMenuItem].name, "mode") == 0)
 		{
 			ChangeMode();
+		}
+		else if (strcmp(menuArr[stateProgram.nodeToSelectMenuItem].name, "load") == 0)
+		{
+			LoadGame();
+		}
+		else if (strcmp(menuArr[stateProgram.nodeToSelectMenuItem].name, "save") == 0)
+		{
+			SaveGame();
 		}
 		RenderScene();
 	}
@@ -536,9 +545,9 @@ bool MoveEnabled(int _rodnum)
 
 void SetSelectedMenuItem(int _newselect)
 {
-	menuArr[stateProgram.nodeToSelectMenuItem].statemenuitem = 1;
+	menuArr[stateProgram.nodeToSelectMenuItem].statemenuitem = enable;
 	stateProgram.nodeToSelectMenuItem = _newselect;
-	menuArr[_newselect].statemenuitem = 2;
+	menuArr[_newselect].statemenuitem = activate;
 }
 
 void timerForGame(int _value)
@@ -556,27 +565,28 @@ void motionForAutomatic(moveDiraction _diraction)
 		rod = motionArr[stateProgram.movescount + 1].rodFrom;
 	else if (_diraction == moveDown)
 		rod = motionArr[stateProgram.movescount + 1].rodTo;
-	char chRods;
+	char chRods = '0';
 	if (rod == 0)
 		chRods = '1';
 	else if (rod == 1)
 		chRods = '2';
 	else if (rod == 2)
 		chRods = '3';
+	if (chRods != '0')
 	Keyboard(chRods, 0, 0);
 }
 
 void ShowTime()
 {
 	glColor3f(0, 0.29, 0.65);
-	glRasterPos2f(300, 30);
+	glRasterPos2f(20, 48);
 	glPrint("Время: %02.0f:%02.0f:%02.0f", floor(stateProgram.timercounter / 3600), floor(stateProgram.timercounter / 60), stateProgram.timercounter - floor(stateProgram.timercounter / 60) * 60);
 }
 
 void ShowMovesCount()
 {
 	glColor3f(0, 0.29, 0.65);
-	glRasterPos2f(30, 30);
+	glRasterPos2f(20, 26);
 	glPrint("Ходов: %u", stateProgram.movescount);
 }
 
@@ -584,18 +594,20 @@ void StartNewGame()
 {
 	stateProgram.stategame = game;
 	stateProgram.timercounter++;
-	menuArr[0].statemenuitem = 0; menuArr[2].statemenuitem = 0; menuArr[3].statemenuitem = 0; menuArr[4].statemenuitem = 1; menuArr[5].statemenuitem = 0;
+	menuArr[0].statemenuitem = disable; menuArr[2].statemenuitem = disable; menuArr[3].statemenuitem = disable; menuArr[4].statemenuitem = enable; menuArr[5].statemenuitem = disable;
 	strcpy_s(menuArr[1].content, "Пауза");
 	glutTimerFunc(1000, timerForGame, 10);
 }
 
 void StartNewGameAuto()
 {
-	strcpy_s(menuArr[1].content, "Пауза");
-	menuArr[0].statemenuitem = 0; menuArr[2].statemenuitem = 0; menuArr[3].statemenuitem = 0; menuArr[4].statemenuitem = 0; menuArr[5].statemenuitem = 0;
+	//strcpy_s(menuArr[1].content, "Пауза");
+	menuArr[2].statemenuitem = activate; menuArr[0].statemenuitem = disable; menuArr[1].statemenuitem = disable; menuArr[3].statemenuitem = disable; menuArr[4].statemenuitem = disable; menuArr[5].statemenuitem = disable;
+	stateProgram.nodeToSelectMenuItem = 2;
 	iterationCount = 0;
 	motionArrCount = pow(2, stateProgram.RingsCount) - 1; // количество ходов по формуле (2 ^ n) - 1
 	motionArr = (DoGoArrItem*)malloc(motionArrCount * sizeof(DoGoArrItem));
+	stateProgram.movescount = 0;
 	MoveAutomatic(stateProgram.RingsCount, 0, 2); // запускаем просчет ходов и сохраняем их в массиве motionArr
 	stateProgram.stategame = game;
 	motionForAutomatic(moveUp);
@@ -603,25 +615,36 @@ void StartNewGameAuto()
 
 void PauseGame()
 {
-	menuArr[0].statemenuitem = 0; menuArr[2].statemenuitem = 1; menuArr[3].statemenuitem = 1; menuArr[4].statemenuitem = 1; menuArr[5].statemenuitem = 0;
+	stateProgram.nodeToSelectMenuItem = 1;
+	menuArr[1].statemenuitem = activate;
+	menuArr[0].statemenuitem = disable; menuArr[2].statemenuitem = enable; menuArr[3].statemenuitem = disable; menuArr[5].statemenuitem = disable;
+	menuArr[4].statemenuitem = stateProgram.modegame == manual ? enable : disable;
 	strcpy_s(menuArr[1].content, "Продолжить");
 	stateProgram.stategame = pause;
 }
 
 void ResumeGame()
 {
-	menuArr[0].statemenuitem = 0; menuArr[2].statemenuitem = 1; menuArr[3].statemenuitem = 0; menuArr[4].statemenuitem = 1; menuArr[5].statemenuitem = 0;
+	menuArr[0].statemenuitem = disable; menuArr[2].statemenuitem = disable; menuArr[3].statemenuitem = disable; menuArr[4].statemenuitem = enable; menuArr[5].statemenuitem = disable;
 	strcpy_s(menuArr[1].content, "Пауза");
-	glutTimerFunc(1000, timerForGame, 10);
+	if (stateProgram.modegame == manual)
+		glutTimerFunc(1000, timerForGame, 10);
 	stateProgram.stategame = game;
 }
 
 void ResetAllState()
 {
-	menuArr[0].statemenuitem = 1; menuArr[2].statemenuitem = 0; menuArr[3].statemenuitem = 1; menuArr[4].statemenuitem = 0; menuArr[5].statemenuitem = 1;
+	animatedRodNum = animatedRingNum = rodDownNumber = rodUpNumber = -1;
+	stateProgram.nodeToSelectMenuItem = 0;
+	menuArr[0].statemenuitem = activate;
+	menuArr[1].statemenuitem = enable;
+	menuArr[2].statemenuitem = disable; menuArr[3].statemenuitem = enable; menuArr[4].statemenuitem = disable; menuArr[5].statemenuitem = enable;
 	strcpy_s(menuArr[1].content, "Начать");
-	stateProgram.movescount = stateProgram.timercounter = 0;
+	stateProgram.movescount = -1;
+	stateProgram.timercounter = 0;
 	stateProgram.stategame = stop;
+	stateProgram.modegame = manual;
+	ChangeMode();															// изменим подпись кнопки выбора режима (установим ее в "ручками")
 	Rods = InitData(stateProgram.RingsCount);
 }
 
@@ -631,7 +654,7 @@ void ChangeMode()
 	{
 	case manual:
 		stateProgram.modegame = automatic;
-		strcpy_s(menuArr[0].content, "Демо");
+		strcpy_s(menuArr[0].content, "Авто");
 		break;
 	case automatic:
 		stateProgram.modegame = manual;
@@ -663,46 +686,84 @@ void MoveAutomatic(int _sizestack, int _fromindex, int _toindex)
 	MoveAutomatic(_sizestack - 1, freeindex, _toindex);
 }
 
-GLvoid BuildFont(GLvoid)  // Построение нашего растрового шрифта
+void LoadGame()
 {
-	HFONT  font;						// Идентификатор шрифта
-	base = glGenLists(224);				// Выделим место для 224 символов
-		font = CreateFont(-22,			// Высота шрифта
-			0,							// Ширина шрифта
-			0,							// Угол отношения
-			0,							// Угол наклона
-			FW_BOLD,					// Ширина шрифта
-			FALSE,						// Курсив
-			FALSE,						// Подчеркивание
-			FALSE,						// Перечеркивание
-			RUSSIAN_CHARSET,			// Идентификатор набора символов
-			OUT_TT_PRECIS,				// Точность вывода
-			CLIP_DEFAULT_PRECIS,		// Точность отсечения
-			ANTIALIASED_QUALITY,		// Качество вывода
-			FF_DONTCARE | DEFAULT_PITCH,  // Семейство и шаг
-			"Courier New"				// Имя шрифта
-		);      
-	SelectObject(wgldc, font);					// Выбрать шрифт, созданный нами
-	wglUseFontBitmaps(wgldc, 32, 224, base);	// Построить 224 символов начиная с пробела
+	Rods = InitData(0);
+	FILE  *inifile;
+	char readstr[255], cutstr[10];
+	int rod = -1, ring, ringval;
+	int ringsall = 0;
+	if (!fopen_s(&inifile, "saved.ini", "r"))
+	{
+		while (!feof(inifile))
+		{
+			fgets(readstr, 255, inifile);
+			if (strstr(readstr, "movescount") != 0)
+			{
+				strncpy_s(cutstr, readstr + 11, 10);
+				stateProgram.movescount = atoi(cutstr);
+			}
+			else if (strstr(readstr, "timercounter") != 0)
+			{
+				strncpy_s(cutstr, readstr + 13, 10);
+				stateProgram.timercounter = atoi(cutstr);
+			}
+			else if (strstr(readstr, "ringscount") != 0)
+			{
+				strncpy_s(cutstr, readstr + 11, 10);
+				stateProgram.RingsCount = atoi(cutstr);
+			}
+			else if (strstr(readstr, "rod") != 0)
+			{
+				strncpy_s(cutstr, readstr + 3, 10);
+				rod = atoi(cutstr);
+			}
+			else if (strstr(readstr, "ring") != 0)
+			{
+				strncpy_s(cutstr, readstr + 4, 10);
+				ring = atoi(cutstr);
+				strncpy_s(cutstr, readstr + 6, 10);
+				ringval = atoi(cutstr);
+				Rods[rod - 1][ring] = ringval;
+			}
+		}
+		fclose(inifile);
+		ShowInfoInit("Данные загружены!!!", &stateShowInfo, green);
+		RenderScene();
+		stateProgram.modegame = manual; // сразу сбросили в ручной режим, даже если до загрузки был авто
+		PauseGame();
+	}
+	else 
+	{
+		ShowInfoInit("Ошибка чтения!!!", &stateShowInfo, red);
+	}
 }
 
-GLvoid glPrint(const char *fmt, ...)        // функция «Печати»
+void SaveGame()
 {
-	char text[256];							// Место для нашей строки
-	va_list ap;								// Указатель на список аргументов
-	if (fmt == NULL)						// Если нет текста
-		return;								// Ничего не делать
-	va_start(ap, fmt);						// Разбор строки переменных
-	vsprintf_s(text, fmt, ap);				// И конвертирование символов в реальные коды
-	va_end(ap);								// Результат помещается в строку
-	glPushAttrib(GL_LIST_BIT);				// Протолкнуть биты списка отображения
-	glListBase(base - 32);					// Задать базу символа в
-	glCallLists(strlen(text), GL_UNSIGNED_BYTE, text); // Текст списками отображения
-	glPopAttrib();							// Возврат битов списка отображения
-}
+	FILE  *inifile;
+	if (!fopen_s(&inifile, "saved.ini", "w"))
+	{
+		fprintf_s(inifile, "movescount=%d\n", stateProgram.movescount);
+		fprintf_s(inifile, "timercounter=%d\n", stateProgram.timercounter);
+		fprintf_s(inifile, "ringscount=%d\n", stateProgram.RingsCount);
+		fprintf_s(inifile, "rod1=%d\n", GetCountRingAtRod(0));
+		for (int i = 0; i < GetCountRingAtRod(0); i++)
+			fprintf_s(inifile, "ring%d=%d\n", i, Rods[0][i]);
 
-GLvoid KillFont(GLvoid)					// Удаление шрифта
-{
-	glDeleteLists(base, 224);			// Удаление всех 224 списков отображения ( НОВОЕ )
-}
+		fprintf_s(inifile, "rod2=%d\n", GetCountRingAtRod(1));
+		for (int i = 0; i < GetCountRingAtRod(1); i++)
+			fprintf_s(inifile, "ring%d=%d\n", i, Rods[1][i]);
 
+		fprintf_s(inifile, "rod3=%d\n", GetCountRingAtRod(2));
+		for (int i = 0; i < GetCountRingAtRod(2); i++)
+			fprintf_s(inifile, "ring%d=%d\n", i, Rods[2][i]);
+
+		fclose(inifile);
+		ShowInfoInit("Игра сохранена!!!", &stateShowInfo, green);
+	}
+	else
+	{
+		ShowInfoInit("Ошибка сохранения!!!", &stateShowInfo, red);
+	}
+}

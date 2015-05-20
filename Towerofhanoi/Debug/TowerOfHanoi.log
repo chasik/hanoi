@@ -1,33 +1,19 @@
-﻿Сборка начата 19.05.2015 23:03:38.
-     1>Проект "C:\Users\ich\Documents\GitHub\TowerOfHanoi\TowerOfHanoi\TowerOfHanoi.vcxproj" в узле 2 (целевые объекты Build).
+﻿Сборка начата 20.05.2015 17:36:30.
+     1>Проект "C:\Users\W\Documents\GitHub\hanoi\TowerOfHanoi\TowerOfHanoi.vcxproj" в узле 2 (целевые объекты Build).
      1>ClCompile:
-         E:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt hanoi.cpp
-         hanoi.cpp
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(138): warning C4305: аргумент: усечение из "double" к "GLclampf"
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(170): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(173): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(176): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(179): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(211): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(222): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(234): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(236): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(238): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(250): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(252): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(254): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(260): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(262): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(272): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(274): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(276): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(571): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\ich\documents\github\towerofhanoi\towerofhanoi\hanoi.cpp(578): warning C4305: аргумент: усечение из "double" к "GLfloat"
+         D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt showinfo.cpp
+         showinfo.cpp
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\showinfo.cpp(21): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\showinfo.cpp(24): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\showinfo.cpp(27): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\showinfo.cpp(30): warning C4305: аргумент: усечение из "double" к "GLfloat"
        Link:
-         E:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\ich\Documents\GitHub\TowerOfHanoi\Debug\TowerOfHanoi.exe" /INCREMENTAL /NOLOGO glut32.lib opengl32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\ich\Documents\GitHub\TowerOfHanoi\Debug\TowerOfHanoi.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /ENTRY:"mainCRTStartup" /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\ich\Documents\GitHub\TowerOfHanoi\Debug\TowerOfHanoi.lib" /MACHINE:X86 Debug\hanoi.obj
-         TowerOfHanoi.vcxproj -> C:\Users\ich\Documents\GitHub\TowerOfHanoi\Debug\TowerOfHanoi.exe
-     1>Сборка проекта "C:\Users\ich\Documents\GitHub\TowerOfHanoi\TowerOfHanoi\TowerOfHanoi.vcxproj" завершена (целевые объекты Build).
+         D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\W\Documents\GitHub\hanoi\Debug\TowerOfHanoi.exe" /INCREMENTAL /NOLOGO glut32.lib opengl32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\W\Documents\GitHub\hanoi\Debug\TowerOfHanoi.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /ENTRY:"mainCRTStartup" /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\W\Documents\GitHub\hanoi\Debug\TowerOfHanoi.lib" /MACHINE:X86 Debug\glprints.obj
+         Debug\hanoi.obj
+         Debug\showinfo.obj
+         TowerOfHanoi.vcxproj -> C:\Users\W\Documents\GitHub\hanoi\Debug\TowerOfHanoi.exe
+     1>Сборка проекта "C:\Users\W\Documents\GitHub\hanoi\TowerOfHanoi\TowerOfHanoi.vcxproj" завершена (целевые объекты Build).
 
 Сборка успешно завершена.
 
-Затраченное время: 00:00:00.87
+Затраченное время: 00:00:00.45
