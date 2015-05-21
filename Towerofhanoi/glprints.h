@@ -4,7 +4,7 @@
 	// функции для отображения текста (в том числе и кириллицы). Урок NeHe № 13
 	// --------------------------------------------------------------------------------------------------------
 
-	GLvoid BuildFont(GLvoid);
+	GLvoid BuildFont(int);
 	GLvoid KillFont(GLvoid);
 	GLvoid glPrint(const char *fmt, ...);
 

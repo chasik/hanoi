@@ -5,12 +5,12 @@
 
 GLuint  base;
 
-GLvoid BuildFont(GLvoid)  // Построение нашего растрового шрифта
+GLvoid BuildFont(int _size)  // Построение нашего растрового шрифта
 {
 	HDC wgldc = wglGetCurrentDC();		// получение контекста устройства (windows API). Нужен для установки шрифта.
 	HFONT  font;					// Идентификатор шрифта
 	base = glGenLists(224);			// Выделим место для 224 символов
-	font = CreateFont(-22,			// Высота шрифта
+	font = CreateFont(-_size,			// Высота шрифта
 		0,							// Ширина шрифта
 		0,							// Угол отношения
 		0,							// Угол наклона

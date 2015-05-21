@@ -1,12 +1,31 @@
-﻿Сборка начата 20.05.2015 17:36:30.
+﻿Сборка начата 21.05.2015 16:38:20.
      1>Проект "C:\Users\W\Documents\GitHub\hanoi\TowerOfHanoi\TowerOfHanoi.vcxproj" в узле 2 (целевые объекты Build).
      1>ClCompile:
-         D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt showinfo.cpp
-         showinfo.cpp
-     1>c:\users\w\documents\github\hanoi\towerofhanoi\showinfo.cpp(21): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\w\documents\github\hanoi\towerofhanoi\showinfo.cpp(24): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\w\documents\github\hanoi\towerofhanoi\showinfo.cpp(27): warning C4305: аргумент: усечение из "double" к "GLfloat"
-     1>c:\users\w\documents\github\hanoi\towerofhanoi\showinfo.cpp(30): warning C4305: аргумент: усечение из "double" к "GLfloat"
+         D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt hanoi.cpp
+         hanoi.cpp
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(142): warning C4305: аргумент: усечение из "double" к "GLclampf"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(172): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(175): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(178): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(181): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(185): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(210): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(221): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(233): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(235): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(237): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(249): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(251): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(253): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(259): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(261): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(271): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(273): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(275): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(286): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(291): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(787): warning C4305: аргумент: усечение из "double" к "GLfloat"
+     1>c:\users\w\documents\github\hanoi\towerofhanoi\hanoi.cpp(795): warning C4305: аргумент: усечение из "double" к "GLfloat"
        Link:
          D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\W\Documents\GitHub\hanoi\Debug\TowerOfHanoi.exe" /INCREMENTAL /NOLOGO glut32.lib opengl32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\W\Documents\GitHub\hanoi\Debug\TowerOfHanoi.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /ENTRY:"mainCRTStartup" /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\W\Documents\GitHub\hanoi\Debug\TowerOfHanoi.lib" /MACHINE:X86 Debug\glprints.obj
          Debug\hanoi.obj
@@ -16,4 +35,4 @@
 
 Сборка успешно завершена.
 
-Затраченное время: 00:00:00.45
+Затраченное время: 00:00:01.04

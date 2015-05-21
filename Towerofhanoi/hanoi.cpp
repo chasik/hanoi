@@ -44,12 +44,13 @@ enum moveDiraction // направление двежения
 
 struct structState
 {
-	int RingsCount = 4;
+	int RingsCount = 5;
 	int nodeToSelectMenuItem = 0;
 	int timercounter = 0;
 	int movescount = -1;
 	stateGame stategame = stop;
 	modeGame modegame = manual;
+	bool isfinish = false;
 };
 
 structState stateProgram;	// статус состояния программы
@@ -59,7 +60,7 @@ struct DoGoArrItem			// структура для хранения одного хода
 	int rodFrom;
 	int rodTo;
 };
-DoGoArrItem *motionArr;		// массив расчитанных ходов
+DoGoArrItem *motionArr;		// массив расcчитанных ходов
 int motionArrCount;			// расчетное количество ходов по формуле 2 в степени diskcount минус еденица
 
 enum stateButton			// перечисление для хранения состояния кнопки
@@ -108,8 +109,8 @@ bool MoveEnabled(int _rodnum);							// функция вовзращает truе, если активирова
 void timerForGame(int _value); // функция таймера (расчет потраченного времени)
 void motionForAutomatic(moveDiraction _diraction);	// данная ф-ия "эмитирует" нажатие клавиш в зависимости от заданного направления. Таким образом реализуем авто режим, не переписывая код,
 													// не придумывая еще ф-ию для авто режима
-void ShowTime();		// отображение времени
-void ShowMovesCount();	// отображение количества ходов
+void ShowTime(int _x = 20, int _y = 48);		// отображение времени
+void ShowMovesCount(int _x = 20, int _y = 26);	// отображение количества ходов
 void ChangeRingsCount();// отбработка нажатия кнопки изменения кол-ва дисков
 
 void StartNewGame();	// запуск игры при ручном режиме
@@ -123,6 +124,8 @@ void MoveAutomatic(int _sizestack, int _fromindex, int _toindex); // функция для
 
 void LoadGame();						// функция загрузки ранее сохраненного состояния игры
 void SaveGame();						// сохранение состояния игры
+
+void ShowFinishWindow();				// вывод результатов при успешном завершении игры
 
 void main(){
 	Rods = InitData(stateProgram.RingsCount); // первичная инициализация дисков при запуске программы
@@ -146,7 +149,7 @@ void main(){
 	glutKeyboardFunc(Keyboard);		// назначение функции обратного вызова для работы с клавиатурой (1,2,3)
 	glutSpecialFunc(SKeyboard);		// ....... для работы с клавиатурой (движение по меню с помощью стрелок)
 
-	BuildFont();					// построение шрифта
+	BuildFont(22);					// построение шрифта
 
 	glutDisplayFunc(RenderScene);	// назначение функции рендеринга (прорисовки) экрана
 	RenderScene();					// принудительная первоначальная прорисовка экрана
@@ -183,13 +186,6 @@ void RenderScene()
 		glRasterPos2f(i * 250 - 100, 490);
 		glPrint("%u", i);
 	}
-	// блок для отладки - можно удалить
-	//int a[3][13];
-	//for (int i = 0; i < 3; i++)
-	//{
-	//	for (int j = 0; j < 13; j++)
-	//		a[i][j] = Rods[i][j];
-	//}
 	for (int rodNumber = 0; rodNumber < 3; rodNumber++)		// цикл по количеству стержней
 	{
 		bool rodMoveEnabled = MoveEnabled(rodNumber);
@@ -286,13 +282,20 @@ void RenderScene()
 	}
 
 	if (stateProgram.timercounter > 0)	// если наш счетчик времени активирован (больше нуля), то отобразим его значение в формате hh:mm:ss
+	{
+		glColor3f(0, 0.29, 0.65);
 		ShowTime();
+	}
 	if (stateProgram.movescount > -1)
+	{
+		glColor3f(0, 0.29, 0.65);
 		ShowMovesCount();				// то же сделаем и для кол-ва ходов, если игра активна
+	}
 
 	if (stateShowInfo.timer > 0 && stateShowInfo.timer < stateShowInfo.timerlimit)
 		ShowInfo(&stateShowInfo);
-
+	if (stateProgram.isfinish == true)
+		ShowFinishWindow();
 	glutSwapBuffers();					// glut - так как мы используем opengl в режиме с двойным буфером (отрисовка происходит на заднем плане) 
 										// - поменяем планы местами и выведем на передний план то что прорисовали до этого момента
 }
@@ -360,10 +363,16 @@ void AnimateRing(int _rodnum)
 		}
 		else
 		{
+			// Завершение анимации диска
 			SwapRingsAtRods(rodUpNumber, rodDownNumber);
 			animatedRodNum = animatedRingNum = rodDownNumber = rodUpNumber = -1;
 			if (stateProgram.modegame == automatic && stateProgram.movescount < motionArrCount)
 				motionForAutomatic(moveUp);
+			if (GetCountRingAtRod(0) == 0 && GetCountRingAtRod(1) == 0 && GetCountRingAtRod(2) == stateProgram.RingsCount)
+			{
+				stateProgram.isfinish = true;
+				RenderScene();
+			}
 		}
 	}
 }
@@ -458,6 +467,7 @@ void Keyboard(unsigned char _key, int _x, int _y)
 			{
 			case stop:
 				animatedRodNum = animatedRingNum = rodDownNumber = rodUpNumber = -1;
+				stateProgram.isfinish = false;
 				if (stateProgram.modegame == manual)
 					StartNewGame();
 				else if (stateProgram.modegame == automatic)
@@ -552,9 +562,11 @@ void SetSelectedMenuItem(int _newselect)
 
 void timerForGame(int _value)
 {
-	stateProgram.timercounter++;
-	if (stateProgram.stategame == game)
+	if (stateProgram.stategame == game && !stateProgram.isfinish)
+	{
+		stateProgram.timercounter++;
 		glutTimerFunc(1000, timerForGame, 10);
+	}
 	RenderScene();
 }
 
@@ -576,17 +588,15 @@ void motionForAutomatic(moveDiraction _diraction)
 	Keyboard(chRods, 0, 0);
 }
 
-void ShowTime()
+void ShowTime(int _x, int _y)
 {
-	glColor3f(0, 0.29, 0.65);
-	glRasterPos2f(20, 48);
+	glRasterPos2f(_x, _y);
 	glPrint("Время: %02.0f:%02.0f:%02.0f", floor(stateProgram.timercounter / 3600), floor(stateProgram.timercounter / 60), stateProgram.timercounter - floor(stateProgram.timercounter / 60) * 60);
 }
 
-void ShowMovesCount()
+void ShowMovesCount(int _x, int _y)
 {
-	glColor3f(0, 0.29, 0.65);
-	glRasterPos2f(20, 26);
+	glRasterPos2f(_x, _y);
 	glPrint("Ходов: %u", stateProgram.movescount);
 }
 
@@ -601,7 +611,6 @@ void StartNewGame()
 
 void StartNewGameAuto()
 {
-	//strcpy_s(menuArr[1].content, "Пауза");
 	menuArr[2].statemenuitem = activate; menuArr[0].statemenuitem = disable; menuArr[1].statemenuitem = disable; menuArr[3].statemenuitem = disable; menuArr[4].statemenuitem = disable; menuArr[5].statemenuitem = disable;
 	stateProgram.nodeToSelectMenuItem = 2;
 	iterationCount = 0;
@@ -611,6 +620,7 @@ void StartNewGameAuto()
 	MoveAutomatic(stateProgram.RingsCount, 0, 2); // запускаем просчет ходов и сохраняем их в массиве motionArr
 	stateProgram.stategame = game;
 	motionForAutomatic(moveUp);
+	glutTimerFunc(1000, timerForGame, 10);
 }
 
 void PauseGame()
@@ -634,6 +644,7 @@ void ResumeGame()
 
 void ResetAllState()
 {
+	stateProgram.isfinish = false;
 	animatedRodNum = animatedRingNum = rodDownNumber = rodUpNumber = -1;
 	stateProgram.nodeToSelectMenuItem = 0;
 	menuArr[0].statemenuitem = activate;
@@ -766,4 +777,28 @@ void SaveGame()
 	{
 		ShowInfoInit("Ошибка сохранения!!!", &stateShowInfo, red);
 	}
+}
+
+void ShowFinishWindow()
+{
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glBegin(GL_QUADS);
+		glColor4f(0.1, 0.1, 1, 0.9);
+		glVertex2f(5, 5);
+		glVertex2f(5, 495);
+		glVertex2f(805, 495);
+	glVertex2f(805, 5);
+	glEnd();
+	glDisable(GL_BLEND);
+	BuildFont(40);
+	glColor3f(1, 0.1, 0.1);
+	glRasterPos2f(30, 40);
+	glPrint("Игра завершена!");
+	BuildFont(22);
+	ShowMovesCount(30, 80);
+	ShowTime(30, 120);
+	// оставляем доступной только кнопку сброса
+	menuArr[2].statemenuitem = activate; menuArr[0].statemenuitem = disable; menuArr[1].statemenuitem = disable; menuArr[3].statemenuitem = disable; menuArr[4].statemenuitem = disable; menuArr[5].statemenuitem = disable;
+	stateProgram.nodeToSelectMenuItem = 2;
 }
